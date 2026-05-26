@@ -44,7 +44,7 @@ public class Level {
 	private int height;
 	private int tileSize;
 	private Tileset tileset;
-	public static float GRAVITY = 50;
+	public static float GRAVITY = 70;
 
 	public Level(LevelData leveldata) {
 		this.leveldata = leveldata;
@@ -215,27 +215,21 @@ public class Level {
 		}
 		if(row+1<map.getTiles()[0].length&&!map.getTiles()[col][row+1].isSolid()){
 			fullness=0;
+			//when water hits the floor
+			if(row+2<map.getTiles()[0].length&&map.getTiles()[col][row+2].isSolid()){
+				fullness=3;
+			}
 			water(col,row+1,map,fullness);
 		}
 		else{
 		//Examine all the boundaries for left and right water falling:
 		//right
-		//Under such grounds as these, set fullness to zero
 		if(col+1 < map.getTiles().length && !(map.getTiles()[col+1][row] instanceof Water)&&!map.getTiles()[col+1][row].isSolid()&&fullness!=0) {
-			//Start the rainfalllllllllll
-			if(row+1<map.getTiles()[0].length&&!((map.getTiles()[col][row+1]).isSolid())){
-				fullness=0;
-				water(col, row+1,map,fullness);
-			} else {
-				water(col+1, row, map, fullness);
-			}
+			water(col+1, row, map, fullness);
 		}
 		//left
 		if(col-1 >= 0 && !(map.getTiles()[col-1][row] instanceof Water)&&!map.getTiles()[col-1][row].isSolid()&&fullness!=0) {
-			if(row+1<map.getTiles()[0].length&&!((map.getTiles()[col][row+1]).isSolid())){
-				fullness=0;
-				water(col, row+1,map,fullness);
-			}else water(col-1, row, map, fullness);
+			water(col-1, row, map, fullness);
 		}
 	}
 }

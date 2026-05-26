@@ -6,6 +6,7 @@ package platformer.code.gameengine;
 import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 
+import platformer.code.gameengine.graphics.MyGraphics;
 import platformer.code.gameengine.graphics.MyWindow;
 import platformer.code.gameengine.input.KeyboardInputManager;
 import platformer.code.gameengine.input.MouseInputManager;
@@ -60,7 +61,7 @@ public abstract class GameBase {
 				do{
 					do{
 						Graphics g = bs.getDrawGraphics();
-						g.translate(window.getInsetX(), window.getInsetY());
+						g.translate(MyWindow.getInsetX(), MyWindow.getInsetY());
 						draw(g); //Calling method draw() in the sub-class
 						g.dispose();
 					}while(bs.contentsLost());
