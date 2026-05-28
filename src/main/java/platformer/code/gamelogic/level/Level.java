@@ -247,32 +247,41 @@ public class Level {
 			//so that the loop auto stops when you meet that condition
 			//Do an upwards check
 			if(placedThisRound.size()<numSquaresToFill&&row+rowChange<map.getTiles()[0].length){
-				if(!map.getTiles()[col][row+rowChange].isSolid()) 
+				if(!(map.getTiles()[col][row+rowChange].isSolid()&&map.getTiles()[col][row+rowChange]instanceof Gas)) 
 					placedThisRound.add(new Gas((float)col,(float)row+rowChange,tileSize,tileset.getImage("GasOne"),this,0));
-				if(placedThisRound.size()<numSquaresToFill&&canGoRight&&!map.getTiles()[col+colChange][row+rowChange].isSolid())
+					map.addTile(col,row+rowChange,placedThisRound.get(placedThisRound.size()-1));
+				if(placedThisRound.size()<numSquaresToFill&&canGoRight&&!(map.getTiles()[col+colChange][row+rowChange].isSolid()&&map.getTiles()[col+colChange][row+rowChange]instanceof Gas))
 					placedThisRound.add(new Gas((float)col+colChange,(float)row+rowChange,tileSize,tileset.getImage("GasOne"),this,0));
-				if(placedThisRound.size()<numSquaresToFill&&canGoLeft&&!map.getTiles()[col-colChange][row+rowChange].isSolid())
+					map.addTile(col+colChange,row+rowChange,placedThisRound.get(placedThisRound.size()-1));
+				if(placedThisRound.size()<numSquaresToFill&&canGoLeft&&!(map.getTiles()[col-colChange][row+rowChange].isSolid()&&map.getTiles()[col-colChange][row+rowChange]instanceof Gas)){
 					placedThisRound.add(new Gas((float)col-colChange,(float)row+rowChange,tileSize,tileset.getImage("GasOne"),this,0));
-			
+					map.addTile(col-colChange,row+rowChange,placedThisRound.get(placedThisRound.size()-1));
+				}
 			}
 			//Do a purely horizontal check
-			if(placedThisRound.size()<numSquaresToFill&&canGoRight&&!map.getTiles()[row][col+colChange].isSolid()){
-				placedThisRound.add(new Gas((float)row,(float)col+colChange,tileSize,tileset.getImage("GasOne"),this,0));	
+			if(placedThisRound.size()<numSquaresToFill&&canGoRight&&!(map.getTiles()[row][col+colChange].isSolid()&&map.getTiles()[col+colChange][row]instanceof Gas)){
+				placedThisRound.add(new Gas((float)row,(float)col+colChange,tileSize,tileset.getImage("GasOne"),this,0));
+				map.addTile(col+colChange,row,placedThisRound.get(placedThisRound.size()-1));	
 			}
-			if(placedThisRound.size()<numSquaresToFill&&canGoLeft&&!map.getTiles()[row][col-colChange].isSolid()){
+			if(placedThisRound.size()<numSquaresToFill&&canGoLeft&&!(map.getTiles()[row][col-colChange].isSolid()&&map.getTiles()[col-colChange][row]instanceof Gas)){
 				placedThisRound.add(new Gas((float)col-colChange,(float)row,tileSize,tileset.getImage("GasOne"),this,0));
+				map.addTile(col-colChange,row,placedThisRound.get(placedThisRound.size()-1));
 			}
 			//Do the negative of the upwards check
 			if(placedThisRound.size()<numSquaresToFill&&row-rowChange>=0){
-				if(!map.getTiles()[col][row-rowChange].isSolid()) 
+				if(!(map.getTiles()[col][row-rowChange].isSolid()&&map.getTiles()[col][row-rowChange]instanceof Gas)) {
 					placedThisRound.add(new Gas((float)col,(float)row-rowChange,tileSize,tileset.getImage("GasOne"),this,0));
-				if(placedThisRound.size()<numSquaresToFill&&canGoRight&&!map.getTiles()[col+colChange][row-rowChange].isSolid())
-					placedThisRound.add(new Gas((float)col+colChange,(float)row+rowChange,tileSize,tileset.getImage("GasOne"),this,0));
-				if(placedThisRound.size()<numSquaresToFill&&canGoLeft&&!map.getTiles()[col-colChange][row-rowChange].isSolid())
-					placedThisRound.add(new Gas((float)col-colChange,(float)row+rowChange,tileSize,tileset.getImage("GasOne"),this,0));
+					map.addTile(col,row-rowChange,placedThisRound.get(placedThisRound.size()-1));}
+				if(placedThisRound.size()<numSquaresToFill&&canGoRight&&!(map.getTiles()[col+colChange][row-rowChange].isSolid()&&map.getTiles()[col+colChange][row-rowChange]instanceof Gas)){
+					placedThisRound.add(new Gas((float)col+colChange,(float)row-rowChange,tileSize,tileset.getImage("GasOne"),this,0));
+					map.addTile(col+colChange,row-rowChange,placedThisRound.get(placedThisRound.size()-1));}
+				if(placedThisRound.size()<numSquaresToFill&&canGoLeft&&!(map.getTiles()[col-colChange][row-rowChange].isSolid()&&map.getTiles()[col-colChange][row-rowChange]instanceof Gas)){
+					placedThisRound.add(new Gas((float)col-colChange,(float)row-rowChange,tileSize,tileset.getImage("GasOne"),this,0));
+					map.addTile(col-colChange,row-rowChange,placedThisRound.get(placedThisRound.size()-1));
+				}
 			}
 		}
-	}	
+		}	
 
 
 public void draw(Graphics g) {
