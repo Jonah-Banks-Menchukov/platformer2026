@@ -118,6 +118,10 @@ public class Level {
 					tiles[x][y] = new Water(xPosition, yPosition, tileSize, tileset.getImage("Half_water"), this, 2);
 				else if (values[x][y] == 21)
 					tiles[x][y] = new Water(xPosition, yPosition, tileSize, tileset.getImage("Quarter_water"), this, 1);
+				else if(values[x][y]==22)
+					tiles[x][y]=new Tile(xPosition, yPosition, tileSize, null, false, this);
+				else if(values[x][y]==23)
+					tiles[x][y]=new Tile(xPosition, yPosition, tileSize, null, true, this);
 			}
 
 		}
@@ -242,7 +246,7 @@ public class Level {
 			boolean canGoRight=col+1<map.getTiles().length;
 			boolean canGoUp=row-1>=0;
 			boolean canGoDown=row+1<map.getTiles()[0].length;
-			Tile t=canGoUp? map.getTiles()[col][row-1]:null;
+			Tile t=canGoUp? map.getTiles()[row-1][col]:null;
 			Tile tr=canGoUp&&canGoRight? map.getTiles()[col+1][row-1]:null;
 			Tile tl= canGoUp&&canGoLeft? map.getTiles()[col-1][row-1]:null;
 			Tile r=canGoRight? map.getTiles()[col+1][row]:null;
@@ -308,8 +312,6 @@ public class Level {
 					numSquaresToFill-=1;
 				}
 			}
-			//reassign row and col based upon the values in placedThisRound
-			
 		}
 		}	
 
