@@ -234,6 +234,7 @@ public class Level {
 		}
 }
 	private void addGas(int col, int row, Map map, int numSquaresToFill, ArrayList<Gas> placedThisRound) {
+		map.addTile(col, row, new Gas(col,row,tileSize,tileset.getImage("GasOne"),this,0));
 		while(numSquaresToFill>0){
 			//update the values for this iteration and each subsequent one
 			boolean canGoLeft=col-1>=0;
@@ -257,7 +258,7 @@ public class Level {
 					placedThisRound.add(new Gas((float)col,(float)row-1,tileSize,tileset.getImage("GasOne"),this,0));
 					map.addTile(col,row-1,placedThisRound.get(placedThisRound.size()-1));
 					numSquaresToFill-=1;
-				if(numSquaresToFill>0&&canGoRight&&!(tr.isSolid() &&tr instanceof Gas))
+				if(numSquaresToFill>0&&canGoRight&&!(tr.isSolid() && tr instanceof Gas))
 					placedThisRound.add(new Gas((float)col+1,(float)row-1,tileSize,tileset.getImage("GasOne"),this,0));
 					map.addTile(col+1,row-1,placedThisRound.get(placedThisRound.size()-1));
 					numSquaresToFill-=1;
