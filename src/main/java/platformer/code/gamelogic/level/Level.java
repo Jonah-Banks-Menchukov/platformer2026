@@ -238,9 +238,11 @@ public class Level {
 		}
 }
 	private void addGas(int col, int row, Map map, int numSquaresToFill, ArrayList<Gas> placedThisRound) {
+		int test=0;
+		map.addTile(col, row, new Gas(col,row,tileSize,tileset.getImage("GasOne"),this,0));
+		ArrayList<Gas> lastOkArray=new ArrayList<Gas>();
+		numSquaresToFill-=1;
 		while(numSquaresToFill>0){
-			map.addTile(col, row, new Gas(col,row,tileSize,tileset.getImage("GasOne"),this,0));
-			numSquaresToFill-=1;
 			//update the values for this iteration and each subsequent one
 			boolean canGoLeft=col-1>=0;
 			boolean canGoRight=col+1<map.getTiles().length;
@@ -259,7 +261,7 @@ public class Level {
 			//Do an upwards check
 			if(numSquaresToFill>0 && t!=null){
 				//No need to check tr,tl,dr, dl for null bc booleans have done that
-				if(!(t.isSolid()&&t instanceof Gas)){
+				if(numSquaresToFill>0&&!(t.isSolid()&&t instanceof Gas)){
 					Gas g=new Gas(t.getCol(),t.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
 					map.addTile(t.getCol(),t.getRow(),placedThisRound.get(placedThisRound.size()-1));
@@ -293,13 +295,13 @@ public class Level {
 			}
 			//Do the negative of the upwards check
 			if(numSquaresToFill>0&&canGoDown&&d!=null){
-				if(!(d.isSolid()&& d instanceof Gas)) {
+				if(numSquaresToFill>0&&!(d.isSolid()&& d instanceof Gas)) {
 					Gas g=new Gas(d.getCol(),d.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
 					map.addTile(d.getCol(),d.getRow(),placedThisRound.get(placedThisRound.size()-1));
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoRight&&!(dr.isSolid()&& dr instanceof Gas)){
+				if(numSquaresToFill>0&&canGoRight&&!dr.isSolid()&& !(dr instanceof Gas)){
 					Gas g=new Gas(d.getCol(),dr.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
 					map.addTile(col+1,row+1,g);
@@ -311,6 +313,17 @@ public class Level {
 					map.addTile(dl.getCol(),dl.getRow(),g);
 					numSquaresToFill-=1;
 				}
+			}
+			if(placedThisRound.size()==0){
+				test++;
+				col=lastOkArray.get(test).getCol();
+				row=lastOkArray.get(test).getRow();
+			}else{
+				test=0;
+				col=placedThisRound.get(0).getCol();
+				row=placedThisRound.get(0).getRow();
+				lastOkArray=placedThisRound;
+				placedThisRound.clear();
 			}
 		}
 		}	
