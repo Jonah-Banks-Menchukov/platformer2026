@@ -1,5 +1,8 @@
 package platformer.code.gamelogic.level;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.font.*;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +38,7 @@ public class Level {
 
 	private ArrayList<Enemy> enemiesList = new ArrayList<>();
 	private ArrayList<Flower> flowers = new ArrayList<>();
+	private ArrayList<Water> waters=new ArrayList<>();
 
 	private List<PlayerDieListener> dieListeners = new ArrayList<>();
 	private List<PlayerWinListener> winListeners = new ArrayList<>();
@@ -45,6 +49,8 @@ public class Level {
 	private int tileSize;
 	private Tileset tileset;
 	public static float GRAVITY = 70;
+	private long waterTimer=0;
+	private long waterLimit=5;
 
 	public Level(LevelData leveldata) {
 		this.leveldata = leveldata;
@@ -179,7 +185,17 @@ public class Level {
 					i--;
 				}
 			}
-
+			for (int i = 0; i < waters.size(); i++) {
+				if (waters.get(i).getHitbox().isIntersecting(player.getHitbox())) {
+					if(waterTimer==0){
+						waterTimer = System.currentTimeMillis();
+					}else{
+						if((System.currentTimeMillis()-waterTimer)/1000>=waterLimit){
+							waterTimer=0;
+						}
+					}
+				}
+			}
 			// Update the enemies
 			for (int i = 0; i < enemies.length; i++) {
 				enemies[i].update(tslf);
@@ -208,14 +224,18 @@ public class Level {
 		//Make the water block I want become added to the map as I build it
 		if(fullness==3){
 			map.addTile(col, row,solid);
+			waters.add((Water)map.getTiles()[col][row]);
 			fullness=2;
 		}else if(fullness==2){
 			map.addTile(col, row, half);
+			waters.add((Water)map.getTiles()[col][row]);
 			fullness=1;
 		}else if(fullness==1){
 			map.addTile(col,row,quarter);
+			waters.add((Water)map.getTiles()[col][row]);
 		}else if(fullness==0){
 			map.addTile(col,row,rain);
+			waters.add((Water)map.getTiles()[col][row]);
 		}
 		if(row+1<map.getTiles()[0].length&&!map.getTiles()[col][row+1].isSolid()){
 			fullness=0;
@@ -238,95 +258,89 @@ public class Level {
 		}
 }
 	private void addGas(int col, int row, Map map, int numSquaresToFill, ArrayList<Gas> placedThisRound) {
-		int test=0;
 		map.addTile(col, row, new Gas(col,row,tileSize,tileset.getImage("GasOne"),this,0));
-		ArrayList<Gas> lastOkArray=new ArrayList<Gas>();
 		numSquaresToFill-=1;
 		while(numSquaresToFill>0){
-			//update the values for this iteration and each subsequent one
+//			//update the values for this iteration and each subsequent one
 			boolean canGoLeft=col-1>=0;
 			boolean canGoRight=col+1<map.getTiles().length;
 			boolean canGoUp=row-1>=0;
 			boolean canGoDown=row+1<map.getTiles()[0].length;
-			Tile t=canGoUp? map.getTiles()[row-1][col]:null;
-			Tile tr=canGoUp&&canGoRight? map.getTiles()[col+1][row-1]:null;
-			Tile tl= canGoUp&&canGoLeft? map.getTiles()[col-1][row-1]:null;
-			Tile r=canGoRight? map.getTiles()[col+1][row]:null;
-			Tile l=canGoLeft? map.getTiles()[col-1][row]:null;
-			Tile d=canGoDown? map.getTiles()[col][row-1]:null;
-			Tile dr=canGoDown&&canGoRight? map.getTiles()[col+1][row+1]:null;
-			Tile dl=canGoDown&&canGoLeft? map.getTiles()[col-1][row+1]:null;
 			//every if statement within the loop starts with this condition and an && 
 			//so that the loop auto stops when you meet that condition
 			//Do an upwards check
-			if(numSquaresToFill>0 && t!=null){
-				//No need to check tr,tl,dr, dl for null bc booleans have done that
-				if(numSquaresToFill>0&&!(t.isSolid()&&t instanceof Gas)){
-					Gas g=new Gas(t.getCol(),t.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
+			try {
+			if(numSquaresToFill>0 && canGoUp){
+				if(numSquaresToFill>0&&!map.getTiles()[row-1][col].isSolid()&&
+					!(map.getTiles()[row-1][col] instanceof Gas)){
+					Gas g=new Gas(col,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					map.addTile(t.getCol(),t.getRow(),placedThisRound.get(placedThisRound.size()-1));
+					map.addTile(col,row-1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoRight&&!(tr.isSolid() && tr instanceof Gas)){
-					Gas g=new Gas(tr.getCol(),tr.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
+				if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row-1].isSolid()) && !(map.getTiles()[col+1][row-1] instanceof Gas)){
+					Gas g=new Gas(col+1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					map.addTile(tr.getCol(),tr.getRow(),g);
+					map.addTile(col+1,row-1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoLeft&&!(tl.isSolid()&& tl instanceof Gas)){
-					Gas g=new Gas(tl.getCol(),tl.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
+				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row-1].isSolid())&& !(map.getTiles()[col-1][row-1] instanceof Gas)){
+					Gas g=new Gas(col-1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					map.addTile(tl.getCol(),tl.getRow(),g);
+					map.addTile(col-1,row-1,g);
 					numSquaresToFill-=1;
 				}
+				
 			}
 			//Do a purely horizontal check
-			if(numSquaresToFill>0&&canGoRight&&!(r.isSolid()&& r instanceof Gas)){
-				Gas g=new Gas(r.getRow(),r.getCol(),tileSize,tileset.getImage("GasOne"),this,0);
+			if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row].isSolid())&& !(map.getTiles()[col+1][row] instanceof Gas)){
+				Gas g=new Gas(col+1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
-				map.addTile(r.getCol(),r.getRow(),g);
+				map.addTile(col+1,row,g);
 				numSquaresToFill-=1;	
 			}
-			if(numSquaresToFill>0&&canGoLeft&&!(l.isSolid()&& l instanceof Gas)){
-				Gas g=new Gas(l.getCol(),l.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
+			if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row].isSolid())&& !(map.getTiles()[col-1][row] instanceof Gas)){
+				Gas g=new Gas(col-1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
-				map.addTile(l.getCol(),l.getRow(),g);
+				map.addTile(col-1,row,g);
 				numSquaresToFill-=1;
 			}
 			//Do the negative of the upwards check
-			if(numSquaresToFill>0&&canGoDown&&d!=null){
-				if(numSquaresToFill>0&&!(d.isSolid()&& d instanceof Gas)) {
-					Gas g=new Gas(d.getCol(),d.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
+			if(numSquaresToFill>0&&canGoDown){
+				if(numSquaresToFill>0&&!(map.getTiles()[col][row+1].isSolid())&& !(map.getTiles()[col][row+1] instanceof Gas)) {
+					Gas g=new Gas(col,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					map.addTile(d.getCol(),d.getRow(),placedThisRound.get(placedThisRound.size()-1));
+					map.addTile(col,row+1,placedThisRound.get(placedThisRound.size()-1));
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoRight&&!dr.isSolid()&& !(dr instanceof Gas)){
-					Gas g=new Gas(d.getCol(),dr.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
+				if(numSquaresToFill>0&&canGoRight&&!map.getTiles()[col+1][row+1].isSolid()&& !(map.getTiles()[col+1][row+1] instanceof Gas)){
+					Gas g=new Gas(col+1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
 					map.addTile(col+1,row+1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoLeft&&!(dl.isSolid()&& dl instanceof Gas)){
-					Gas g=new Gas(dl.getCol(),dl.getRow(),tileSize,tileset.getImage("GasOne"),this,0);
+				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row+1].isSolid())&&!(map.getTiles()[col-1][row+1] instanceof Gas)){
+					Gas g=new Gas(col-1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					map.addTile(dl.getCol(),dl.getRow(),g);
+					map.addTile(col-1,row+1,g);
 					numSquaresToFill-=1;
 				}
 			}
+			}catch(ArrayIndexOutOfBoundsException e) {
+				System.out.println(e.getMessage());
+				System.out.println("col="+col);
+				System.out.println("row="+row);
+			}
+			//if failed to fill list for whatever reason
 			if(placedThisRound.size()==0){
-				test++;
-				col=lastOkArray.get(test).getCol();
-				row=lastOkArray.get(test).getRow();
+				return; 
 			}else{
-				test=0;
 				col=placedThisRound.get(0).getCol();
 				row=placedThisRound.get(0).getRow();
-				lastOkArray=placedThisRound;
-				placedThisRound.clear();
+				placedThisRound.remove(0);
 			}
 		}
-		}	
+}	
 
 
 public void draw(Graphics g) {
@@ -378,9 +392,11 @@ public void draw(Graphics g) {
 
 	   	 // Draw the player
 	   	 player.draw(g);
-
-
-
+		 g.setFont(new Font("Times New Roman",Font.BOLD,40));
+		 if(waterTimer!=0){
+		 	g.setColor(Color.RED);
+		 	g.drawString((System.currentTimeMillis()-waterTimer)/1000+"",(int)player.getX(),(int)player.getY());
+		 }
 
 	   	 // used for debugging
 	   	 if (Camera.SHOW_CAMERA)
