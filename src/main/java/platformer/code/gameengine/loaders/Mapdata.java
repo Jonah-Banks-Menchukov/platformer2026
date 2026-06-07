@@ -5,7 +5,7 @@ public class Mapdata {
 	private int width;
 	private int height;
 	private int tileSize;
-	private int[][]values;
+	private int[][] values;
 	
 	public Mapdata(int width, int height, int tileSize, int[][]values) {
 		this.width = width;

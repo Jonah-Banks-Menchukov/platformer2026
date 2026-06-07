@@ -265,14 +265,14 @@ public class Level {
 			boolean canGoLeft=col-1>=0;
 			boolean canGoRight=col+1<map.getTiles().length;
 			boolean canGoUp=row-1>=0;
-			boolean canGoDown=row+1<map.getTiles()[0].length;
+			boolean canGoDown=row+1<map.getTiles()[col].length;
 			//every if statement within the loop starts with this condition and an && 
 			//so that the loop auto stops when you meet that condition
 			//Do an upwards check
-			try {
 			if(numSquaresToFill>0 && canGoUp){
-				if(numSquaresToFill>0&&!map.getTiles()[row-1][col].isSolid()&&
-					!(map.getTiles()[row-1][col] instanceof Gas)){
+				System.out.println("Attempting to access col="+col+", row="+(row-1));
+				if(numSquaresToFill>0&&!map.getTiles()[col][row-1].isSolid()&&
+					!(map.getTiles()[col][row-1] instanceof Gas)){
 					Gas g=new Gas(col,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
 					map.addTile(col,row-1,g);
@@ -325,11 +325,6 @@ public class Level {
 					map.addTile(col-1,row+1,g);
 					numSquaresToFill-=1;
 				}
-			}
-			}catch(ArrayIndexOutOfBoundsException e) {
-				System.out.println(e.getMessage());
-				System.out.println("col="+col);
-				System.out.println("row="+row);
 			}
 			//if failed to fill list for whatever reason
 			if(placedThisRound.size()==0){
