@@ -23,7 +23,8 @@ import platformer.code.gamelogic.tiles.SolidTile;
 import platformer.code.gamelogic.tiles.Spikes;
 import platformer.code.gamelogic.tiles.Tile;
 import platformer.code.gamelogic.tiles.Water;
-
+import platformer.code.gamelogic.tiles.Fire;
+import platformer.code.gamelogic.tiles.Poop;
 public class Level {
 
 	private LevelData leveldata;
@@ -39,6 +40,9 @@ public class Level {
 	private ArrayList<Enemy> enemiesList = new ArrayList<>();
 	private ArrayList<Flower> flowers = new ArrayList<>();
 	private ArrayList<Water> waters=new ArrayList<>();
+	private ArrayList<Gas> gasses=new ArrayList<>();
+	private ArrayList<Fire> fires=new ArrayList<>();
+	private ArrayList<Poop> poops=new ArrayList<>();
 
 	private List<PlayerDieListener> dieListeners = new ArrayList<>();
 	private List<PlayerWinListener> winListeners = new ArrayList<>();
@@ -49,8 +53,8 @@ public class Level {
 	private int tileSize;
 	private Tileset tileset;
 	public static float GRAVITY = 70;
-	private long waterTimer=0;
-	private long waterLimit=5;
+	private float fireTimer=0;
+	private float fireLimit=10000;
 
 	public Level(LevelData leveldata) {
 		this.leveldata = leveldata;
@@ -124,10 +128,12 @@ public class Level {
 					tiles[x][y] = new Water(xPosition, yPosition, tileSize, tileset.getImage("Half_water"), this, 2);
 				else if (values[x][y] == 21)
 					tiles[x][y] = new Water(xPosition, yPosition, tileSize, tileset.getImage("Quarter_water"), this, 1);
-				else if(values[x][y]==22)
-					tiles[x][y]=new Tile(xPosition, yPosition, tileSize, null, false, this);
-				else if(values[x][y]==23)
-					tiles[x][y]=new Tile(xPosition, yPosition, tileSize, null, true, this);
+				else if(values[x][y]==22){
+					tiles[x][y]=new Fire((float)xPosition, (float)yPosition, tileSize, tileset.getImage("Fire"), this);
+					fires.add((Fire)tiles[x][y]);
+				}else if(values[x][y]==23){
+					tiles[x][y]=new Poop(xPosition, yPosition, tileSize, tileset.getImage("Grass"), this,true);
+				}
 			}
 
 		}
@@ -185,15 +191,22 @@ public class Level {
 					i--;
 				}
 			}
-			for (int i = 0; i < waters.size(); i++) {
+			boolean tooFast=false;
+			if(player.getWalkingSpeed()>400) tooFast=true;
+			for (int i = 0; (i < waters.size())&&!tooFast; i++) {
 				if (waters.get(i).getHitbox().isIntersecting(player.getHitbox())) {
-					if(waterTimer==0){
-						waterTimer = System.currentTimeMillis();
-					}else{
-						if((System.currentTimeMillis()-waterTimer)/1000>=waterLimit){
-							waterTimer=0;
-						}
-					}
+					player.setWalkingSpeed(player.getWalkingSpeed()+200);
+					tooFast=false;
+					break;
+				}
+			}
+			if(tooFast) player.setWalkingSpeed(400);
+			//Update fires
+			for (int i = 0; i<fires.size(); i++) {
+				if (fires.get(i).getHitbox().isIntersecting(player.getHitbox())) {
+					player.setWalkingSpeed(player.getWalkingSpeed()+200);
+					tooFast=false;
+					break;
 				}
 			}
 			// Update the enemies
@@ -270,7 +283,6 @@ public class Level {
 			//so that the loop auto stops when you meet that condition
 			//Do an upwards check
 			if(numSquaresToFill>0 && canGoUp){
-				System.out.println("Attempting to access col="+col+", row="+(row-1));
 				if(numSquaresToFill>0&&!map.getTiles()[col][row-1].isSolid()&&
 					!(map.getTiles()[col][row-1] instanceof Gas)){
 					Gas g=new Gas(col,row-1,tileSize,tileset.getImage("GasOne"),this,0);
@@ -388,9 +400,9 @@ public void draw(Graphics g) {
 	   	 // Draw the player
 	   	 player.draw(g);
 		 g.setFont(new Font("Times New Roman",Font.BOLD,40));
-		 if(waterTimer!=0){
+		 if(fireTimer!=0){
 		 	g.setColor(Color.RED);
-		 	g.drawString((System.currentTimeMillis()-waterTimer)/1000+"",(int)player.getX(),(int)player.getY());
+		 	g.drawString(fireLimit-fireTimer,(int)player.getX(),(int)player.getX());
 		 }
 
 	   	 // used for debugging

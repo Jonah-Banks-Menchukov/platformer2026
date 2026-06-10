@@ -42,6 +42,12 @@ public class Player extends PhysicsObject{
 		isJumping = true;
 		if(collisionMatrix[BOT] != null) isJumping = false;
 	}
+	public void setWalkingSpeed(float s){
+		this.walkSpeed=s;
+	}
+	public float getWalkingSpeed(){
+		return walkSpeed;
+	}
 
 	@Override
 	public void draw(Graphics g) {
