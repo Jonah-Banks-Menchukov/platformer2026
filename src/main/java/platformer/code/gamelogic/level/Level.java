@@ -2,7 +2,6 @@ package platformer.code.gamelogic.level;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.font.*;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,8 +52,9 @@ public class Level {
 	private int tileSize;
 	private Tileset tileset;
 	public static float GRAVITY = 70;
-	private float fireTimer=0;
-	private float fireLimit=10000;
+	private long fireTimer=0;
+	private long fireLimit=10000;
+	private boolean immune;
 
 	public Level(LevelData leveldata) {
 		this.leveldata = leveldata;
@@ -132,7 +132,7 @@ public class Level {
 					tiles[x][y]=new Fire((float)xPosition, (float)yPosition, tileSize, tileset.getImage("Fire"), this);
 					fires.add((Fire)tiles[x][y]);
 				}else if(values[x][y]==23){
-					tiles[x][y]=new Poop(xPosition, yPosition, tileSize, tileset.getImage("Grass"), this,true);
+					tiles[x][y]=new Poop(xPosition, yPosition, tileSize, tileset.getImage("Grass"), this);
 				}
 			}
 
@@ -168,19 +168,19 @@ public class Level {
 		if (active) {
 			// Update the player
 			player.update(tslf);
-
 			// Player death
 			if (map.getFullHeight() + 100 < player.getY())
 				onPlayerDeath();
-			if (player.getCollisionMatrix()[PhysicsObject.BOT] instanceof Spikes)
+			if (player.getCollisionMatrix()[PhysicsObject.BOT] instanceof Spikes&&!immune)
 				onPlayerDeath();
-			if (player.getCollisionMatrix()[PhysicsObject.TOP] instanceof Spikes)
+			if (player.getCollisionMatrix()[PhysicsObject.TOP] instanceof Spikes&&!immune)
 				onPlayerDeath();
-			if (player.getCollisionMatrix()[PhysicsObject.LEF] instanceof Spikes)
+			if (player.getCollisionMatrix()[PhysicsObject.LEF] instanceof Spikes&&!immune)
 				onPlayerDeath();
-			if (player.getCollisionMatrix()[PhysicsObject.RIG] instanceof Spikes)
+			if (player.getCollisionMatrix()[PhysicsObject.RIG] instanceof Spikes&&!immune)
 				onPlayerDeath();
-
+			//poops
+			//flowers
 			for (int i = 0; i < flowers.size(); i++) {
 				if (flowers.get(i).getHitbox().isIntersecting(player.getHitbox())) {
 					if(flowers.get(i).getType() == 1)
@@ -191,28 +191,43 @@ public class Level {
 					i--;
 				}
 			}
-			boolean tooFast=false;
-			if(player.getWalkingSpeed()>400) tooFast=true;
-			for (int i = 0; (i < waters.size())&&!tooFast; i++) {
+			//Assume player's walkSpeed is correct
+			boolean tooFast=player.getWalkingSpeed()>400;
+			for (int i = 0; i < waters.size(); i++) {
 				if (waters.get(i).getHitbox().isIntersecting(player.getHitbox())) {
-					player.setWalkingSpeed(player.getWalkingSpeed()+200);
+					//If the player is touching water, no need to update
+					player.setWalkingSpeed(600);
 					tooFast=false;
 					break;
 				}
 			}
 			if(tooFast) player.setWalkingSpeed(400);
 			//Update fires
+			if(immune) fireTimer=System.currentTimeMillis();
+			if(fireTimer>=fireLimit) immune=false;
 			for (int i = 0; i<fires.size(); i++) {
 				if (fires.get(i).getHitbox().isIntersecting(player.getHitbox())) {
-					player.setWalkingSpeed(player.getWalkingSpeed()+200);
-					tooFast=false;
-					break;
+					fireTimer=System.currentTimeMillis();
+					fireLimit=fireTimer+30000;
+					immune=true;
+					Tile t=new Tile(fires.get(i).getCol(),fires.get(i).getRow(),tileSize,null,false,this);
+					map.addTile(fires.get(i).getCol(), fires.get(i).getRow(), t);
+					fires.remove(i);
 				}
 			}
+			//Gasses
+			boolean inTheCloud=false;
+			for(int i=0; i<gasses.size();i++){
+				if(player.getHitbox().isIntersecting(gasses.get(i).getHitbox())){
+					GRAVITY=35;
+					inTheCloud=true;
+				}
+			}
+			if(!inTheCloud&&GRAVITY<70) GRAVITY=70;
 			// Update the enemies
 			for (int i = 0; i < enemies.length; i++) {
 				enemies[i].update(tslf);
-				if (player.getHitbox().isIntersecting(enemies[i].getHitbox())) {
+				if (player.getHitbox().isIntersecting(enemies[i].getHitbox())&&!immune) {
 					onPlayerDeath();
 				}
 			}
@@ -250,10 +265,10 @@ public class Level {
 			map.addTile(col,row,rain);
 			waters.add((Water)map.getTiles()[col][row]);
 		}
-		if(row+1<map.getTiles()[0].length&&!map.getTiles()[col][row+1].isSolid()){
+		if(row+1<map.getTiles()[0].length&&!(map.getTiles()[col][row+1].isSolid())&&!(map.getTiles()[col][row+1] instanceof Poop)){
 			fullness=0;
 			//when water hits the floor
-			if(row+2<map.getTiles()[0].length&&map.getTiles()[col][row+2].isSolid()){
+			if(row+2<map.getTiles()[0].length&&map.getTiles()[col][row+2].isSolid()&&!(map.getTiles()[col][row+2] instanceof Poop)){
 				fullness=3;
 			}
 			water(col,row+1,map,fullness);
@@ -261,20 +276,22 @@ public class Level {
 		else{
 		//Examine all the boundaries for left and right water falling:
 		//right
-		if(col+1 < map.getTiles().length && !(map.getTiles()[col+1][row] instanceof Water)&&!map.getTiles()[col+1][row].isSolid()&&fullness!=0) {
+		if(col+1 < map.getTiles().length && !(map.getTiles()[col+1][row] instanceof Water)&&!map.getTiles()[col+1][row].isSolid()&&fullness!=0&&!(map.getTiles()[col][row+1] instanceof Poop)) {
 			water(col+1, row, map, fullness);
 		}
 		//left
-		if(col-1 >= 0 && !(map.getTiles()[col-1][row] instanceof Water)&&!map.getTiles()[col-1][row].isSolid()&&fullness!=0) {
+		if(col-1 >= 0 && !(map.getTiles()[col-1][row] instanceof Water)&&!map.getTiles()[col-1][row].isSolid()&&fullness!=0&&!(map.getTiles()[col][row+1] instanceof Poop)) {
 			water(col-1, row, map, fullness);
 		}
 		}
 }
+	//added fire functionality to gas, when they collide, all gas in the area is replaced by fire
 	private void addGas(int col, int row, Map map, int numSquaresToFill, ArrayList<Gas> placedThisRound) {
+		boolean ignited=false;
+		ArrayList<Gas> newGasses=new ArrayList<>();
 		map.addTile(col, row, new Gas(col,row,tileSize,tileset.getImage("GasOne"),this,0));
 		numSquaresToFill-=1;
 		while(numSquaresToFill>0){
-//			//update the values for this iteration and each subsequent one
 			boolean canGoLeft=col-1>=0;
 			boolean canGoRight=col+1<map.getTiles().length;
 			boolean canGoUp=row-1>=0;
@@ -283,57 +300,73 @@ public class Level {
 			//so that the loop auto stops when you meet that condition
 			//Do an upwards check
 			if(numSquaresToFill>0 && canGoUp){
-				if(numSquaresToFill>0&&!map.getTiles()[col][row-1].isSolid()&&
+				if(numSquaresToFill>0&&!(map.getTiles()[col][row-1].isSolid())&&!(map.getTiles()[col][row-1] instanceof Poop)&&
 					!(map.getTiles()[col][row-1] instanceof Gas)){
+					if(map.getTiles()[col][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
+					newGasses.add(g);
 					map.addTile(col,row-1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row-1].isSolid()) && !(map.getTiles()[col+1][row-1] instanceof Gas)){
+				if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row-1].isSolid()) && !(map.getTiles()[col+1][row-1] instanceof Gas)&&!(map.getTiles()[col+1][row-1] instanceof Poop)){
+					if(map.getTiles()[col+1][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col+1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
+					newGasses.add(g);
 					map.addTile(col+1,row-1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row-1].isSolid())&& !(map.getTiles()[col-1][row-1] instanceof Gas)){
+				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row-1].isSolid())&& !(map.getTiles()[col-1][row-1] instanceof Gas)&&!(map.getTiles()[col-1][row-1] instanceof Poop)){
+					if(map.getTiles()[col-1][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col-1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
+					newGasses.add(g);
 					map.addTile(col-1,row-1,g);
 					numSquaresToFill-=1;
 				}
 				
 			}
 			//Do a purely horizontal check
-			if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row].isSolid())&& !(map.getTiles()[col+1][row] instanceof Gas)){
+			if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row].isSolid())&& !(map.getTiles()[col+1][row] instanceof Gas)&&!(map.getTiles()[col+1][row] instanceof Poop)){
+				if(map.getTiles()[col+1][row] instanceof Fire) ignited=true;
 				Gas g=new Gas(col+1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
+				newGasses.add(g);
 				map.addTile(col+1,row,g);
 				numSquaresToFill-=1;	
 			}
-			if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row].isSolid())&& !(map.getTiles()[col-1][row] instanceof Gas)){
+			if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row].isSolid())&& !(map.getTiles()[col-1][row] instanceof Gas)&&!(map.getTiles()[col-1][row] instanceof Poop)){
+				if(map.getTiles()[col-1][row] instanceof Fire) ignited=true;
 				Gas g=new Gas(col-1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
+				newGasses.add(g);
 				map.addTile(col-1,row,g);
 				numSquaresToFill-=1;
 			}
 			//Do the negative of the upwards check
 			if(numSquaresToFill>0&&canGoDown){
-				if(numSquaresToFill>0&&!(map.getTiles()[col][row+1].isSolid())&& !(map.getTiles()[col][row+1] instanceof Gas)) {
+				if(numSquaresToFill>0&&!(map.getTiles()[col][row+1].isSolid())&& !(map.getTiles()[col][row+1] instanceof Gas)&&!(map.getTiles()[col][row+1] instanceof Poop)) {
+					if(map.getTiles()[col][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
+					newGasses.add(g);
 					map.addTile(col,row+1,placedThisRound.get(placedThisRound.size()-1));
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoRight&&!map.getTiles()[col+1][row+1].isSolid()&& !(map.getTiles()[col+1][row+1] instanceof Gas)){
+				if(numSquaresToFill>0&&canGoRight&&!map.getTiles()[col+1][row+1].isSolid()&& !(map.getTiles()[col+1][row+1] instanceof Gas)&&!(map.getTiles()[col+1][row+1] instanceof Poop)){
+					if(map.getTiles()[col+1][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col+1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
+					newGasses.add(g);
 					map.addTile(col+1,row+1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row+1].isSolid())&&!(map.getTiles()[col-1][row+1] instanceof Gas)){
+				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row+1].isSolid())&&!(map.getTiles()[col-1][row+1] instanceof Gas)&&!(map.getTiles()[col-1][row+1] instanceof Poop)){
+					if(map.getTiles()[col-1][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col-1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
+					newGasses.add(g);
 					map.addTile(col-1,row+1,g);
 					numSquaresToFill-=1;
 				}
@@ -346,11 +379,21 @@ public class Level {
 				row=placedThisRound.get(0).getRow();
 				placedThisRound.remove(0);
 			}
+
 		}
-}	
+		if(ignited){
+			int i=0;
+			while(newGasses.size()>0){
+				map.addTile(newGasses.get(i).getCol(),newGasses.get(i).getRow(),new Fire(newGasses.get(i).getCol(),newGasses.get(i).getRow(),tileSize,tileset.getImage("Fire"),this));
+			}
+		}
+		for(int i=0;i<newGasses.size(); i++){
+			gasses.add(newGasses.get(i));
+		}
+	}	
 
 
-public void draw(Graphics g) {
+	public void draw(Graphics g) {
 	   	 g.translate((int) -camera.getX(), (int) -camera.getY());
 	   	 // Draw the map
 	   	 for (int x = 0; x < map.getWidth(); x++) {
@@ -398,13 +441,12 @@ public void draw(Graphics g) {
 
 
 	   	 // Draw the player
-	   	 player.draw(g);
 		 g.setFont(new Font("Times New Roman",Font.BOLD,40));
-		 if(fireTimer!=0){
+		 if(immune){
 		 	g.setColor(Color.RED);
-		 	g.drawString(fireLimit-fireTimer,(int)player.getX(),(int)player.getX());
+		 	g.drawString(""+(fireLimit-fireTimer),(int)player.getX(),(int)player.getX());
 		 }
-
+		player.draw(g);
 	   	 // used for debugging
 	   	 if (Camera.SHOW_CAMERA)
 	   		 camera.draw(g);

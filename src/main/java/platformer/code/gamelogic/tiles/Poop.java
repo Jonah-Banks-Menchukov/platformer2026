@@ -11,26 +11,11 @@ import platformer.code.gamelogic.level.Level;
 import platformer.code.gameengine.loaders.Tileset;
 //Poop is a booby trap piece, only appears when player steps on a tile designated as a booby trap
 public class Poop extends Tile{
-    private boolean disguised;
-    private BufferedImage poopImage;
-    public Poop(float x, float y, int size, BufferedImage image, Level level,boolean disguised) {
+    public Poop(float x, float y, int size, BufferedImage image, Level level) {
     super(x,y,size,image,false,level);
-   this.disguised=disguised;
   	this.hitbox = new RectHitbox(x*size , y*size, 0, 10, size, size);
-    poopImage=new Tileset().getImage("Poop");
   } 
   public Hitbox geHitbox(){
     return this.hitbox;
-  }
-  @Override
-  public void setImage(BufferedImage b){
-    if(disguised){
-        super.setImage(b);
-    }else{
-        super.setImage(poopImage);
-    }
-  }
-  public void setDisguised(boolean b){
-    disguised=b;
   }
 }
