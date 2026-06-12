@@ -23,7 +23,6 @@ import platformer.code.gamelogic.tiles.Spikes;
 import platformer.code.gamelogic.tiles.Tile;
 import platformer.code.gamelogic.tiles.Water;
 import platformer.code.gamelogic.tiles.Fire;
-import platformer.code.gamelogic.tiles.Poop;
 public class Level {
 
 	private LevelData leveldata;
@@ -41,7 +40,6 @@ public class Level {
 	private ArrayList<Water> waters=new ArrayList<>();
 	private ArrayList<Gas> gasses=new ArrayList<>();
 	private ArrayList<Fire> fires=new ArrayList<>();
-	private ArrayList<Poop> poops=new ArrayList<>();
 
 	private List<PlayerDieListener> dieListeners = new ArrayList<>();
 	private List<PlayerWinListener> winListeners = new ArrayList<>();
@@ -218,6 +216,7 @@ public class Level {
 			for(int i=0; i<gasses.size();i++){
 				if(player.getHitbox().isIntersecting(gasses.get(i).getHitbox())){
 					GRAVITY=35;
+					player.setJumpPower(675);
 					inTheCloud=true;
 				}
 			}
@@ -263,10 +262,10 @@ public class Level {
 			map.addTile(col,row,rain);
 			waters.add((Water)map.getTiles()[col][row]);
 		}
-		if(row+1<map.getTiles()[0].length&&!(map.getTiles()[col][row+1].isSolid())&&!(map.getTiles()[col][row+1] instanceof Poop)){
+		if(row+1<map.getTiles()[0].length&&!(map.getTiles()[col][row+1].isSolid())){
 			fullness=0;
 			//when water hits the floor
-			if(row+2<map.getTiles()[0].length&&map.getTiles()[col][row+2].isSolid()&&!(map.getTiles()[col][row+2] instanceof Poop)){
+			if(row+2<map.getTiles()[0].length&&map.getTiles()[col][row+2].isSolid()){
 				fullness=3;
 			}
 			water(col,row+1,map,fullness);
@@ -274,11 +273,11 @@ public class Level {
 		else{
 		//Examine all the boundaries for left and right water falling:
 		//right
-		if(col+1 < map.getTiles().length && !(map.getTiles()[col+1][row] instanceof Water)&&!map.getTiles()[col+1][row].isSolid()&&fullness!=0&&!(map.getTiles()[col][row+1] instanceof Poop)) {
+		if(col+1 < map.getTiles().length && !(map.getTiles()[col+1][row] instanceof Water)&&!map.getTiles()[col+1][row].isSolid()&&fullness!=0) {
 			water(col+1, row, map, fullness);
 		}
 		//left
-		if(col-1 >= 0 && !(map.getTiles()[col-1][row] instanceof Water)&&!map.getTiles()[col-1][row].isSolid()&&fullness!=0&&!(map.getTiles()[col][row+1] instanceof Poop)) {
+		if(col-1 >= 0 && !(map.getTiles()[col-1][row] instanceof Water)&&!map.getTiles()[col-1][row].isSolid()&&fullness!=0) {
 			water(col-1, row, map, fullness);
 		}
 		}
@@ -286,7 +285,7 @@ public class Level {
 	//added fire functionality to gas, when they collide, all gas in the area is replaced by fire
 	private void addGas(int col, int row, Map map, int numSquaresToFill, ArrayList<Gas> placedThisRound) {
 		boolean ignited=false;
-		ArrayList<Gas> newGasses=new ArrayList<>();
+		ArrayList<Gas> newGasses=new ArrayList<Gas>();
 		map.addTile(col, row, new Gas(col,row,tileSize,tileset.getImage("GasOne"),this,0));
 		numSquaresToFill-=1;
 		while(numSquaresToFill>0){
@@ -298,7 +297,7 @@ public class Level {
 			//so that the loop auto stops when you meet that condition
 			//Do an upwards check
 			if(numSquaresToFill>0 && canGoUp){
-				if(numSquaresToFill>0&&!(map.getTiles()[col][row-1].isSolid())&&!(map.getTiles()[col][row-1] instanceof Poop)&&
+				if(numSquaresToFill>0&&!(map.getTiles()[col][row-1].isSolid())&&
 					!(map.getTiles()[col][row-1] instanceof Gas)){
 					if(map.getTiles()[col][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col,row-1,tileSize,tileset.getImage("GasOne"),this,0);
@@ -307,7 +306,7 @@ public class Level {
 					map.addTile(col,row-1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row-1].isSolid()) && !(map.getTiles()[col+1][row-1] instanceof Gas)&&!(map.getTiles()[col+1][row-1] instanceof Poop)){
+				if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row-1].isSolid()) && !(map.getTiles()[col+1][row-1] instanceof Gas)){
 					if(map.getTiles()[col+1][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col+1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
@@ -315,7 +314,7 @@ public class Level {
 					map.addTile(col+1,row-1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row-1].isSolid())&& !(map.getTiles()[col-1][row-1] instanceof Gas)&&!(map.getTiles()[col-1][row-1] instanceof Poop)){
+				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row-1].isSolid())&& !(map.getTiles()[col-1][row-1] instanceof Gas)){
 					if(map.getTiles()[col-1][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col-1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
@@ -326,7 +325,7 @@ public class Level {
 				
 			}
 			//Do a purely horizontal check
-			if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row].isSolid())&& !(map.getTiles()[col+1][row] instanceof Gas)&&!(map.getTiles()[col+1][row] instanceof Poop)){
+			if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row].isSolid())&& !(map.getTiles()[col+1][row] instanceof Gas)){
 				if(map.getTiles()[col+1][row] instanceof Fire) ignited=true;
 				Gas g=new Gas(col+1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
@@ -334,7 +333,7 @@ public class Level {
 				map.addTile(col+1,row,g);
 				numSquaresToFill-=1;	
 			}
-			if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row].isSolid())&& !(map.getTiles()[col-1][row] instanceof Gas)&&!(map.getTiles()[col-1][row] instanceof Poop)){
+			if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row].isSolid())&& !(map.getTiles()[col-1][row] instanceof Gas)){
 				if(map.getTiles()[col-1][row] instanceof Fire) ignited=true;
 				Gas g=new Gas(col-1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
@@ -344,7 +343,7 @@ public class Level {
 			}
 			//Do the negative of the upwards check
 			if(numSquaresToFill>0&&canGoDown){
-				if(numSquaresToFill>0&&!(map.getTiles()[col][row+1].isSolid())&& !(map.getTiles()[col][row+1] instanceof Gas)&&!(map.getTiles()[col][row+1] instanceof Poop)) {
+				if(numSquaresToFill>0&&!(map.getTiles()[col][row+1].isSolid())&& !(map.getTiles()[col][row+1] instanceof Gas)) {
 					if(map.getTiles()[col][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
@@ -352,7 +351,7 @@ public class Level {
 					map.addTile(col,row+1,placedThisRound.get(placedThisRound.size()-1));
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoRight&&!map.getTiles()[col+1][row+1].isSolid()&& !(map.getTiles()[col+1][row+1] instanceof Gas)&&!(map.getTiles()[col+1][row+1] instanceof Poop)){
+				if(numSquaresToFill>0&&canGoRight&&!map.getTiles()[col+1][row+1].isSolid()&& !(map.getTiles()[col+1][row+1] instanceof Gas)){
 					if(map.getTiles()[col+1][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col+1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
@@ -360,7 +359,7 @@ public class Level {
 					map.addTile(col+1,row+1,g);
 					numSquaresToFill-=1;
 				}
-				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row+1].isSolid())&&!(map.getTiles()[col-1][row+1] instanceof Gas)&&!(map.getTiles()[col-1][row+1] instanceof Poop)){
+				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row+1].isSolid())&&!(map.getTiles()[col-1][row+1] instanceof Gas)){
 					if(map.getTiles()[col-1][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col-1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
@@ -379,6 +378,7 @@ public class Level {
 			}
 
 		}
+		System.out.println(newGasses);
 		if(ignited){
 			int i=0;
 			while(newGasses.size()>0){

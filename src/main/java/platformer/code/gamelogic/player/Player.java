@@ -66,4 +66,7 @@ public class Player extends PhysicsObject{
 		
 		hitbox.draw(g);
 	}
+	public void setJumpPower(float f){
+		jumpPower=f;
+	}
 }
