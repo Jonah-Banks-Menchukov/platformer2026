@@ -131,8 +131,6 @@ public class Level {
 				else if(values[x][y]==22){
 					tiles[x][y]=new Fire((float)xPosition, (float)yPosition, tileSize, tileset.getImage("Fire"), this);
 					fires.add((Fire)tiles[x][y]);
-				}else if(values[x][y]==23){
-					tiles[x][y]=new Poop(xPosition, yPosition, tileSize, tileset.getImage("Grass"), this);
 				}
 			}
 
@@ -208,7 +206,7 @@ public class Level {
 			for (int i = 0; i<fires.size(); i++) {
 				if (fires.get(i).getHitbox().isIntersecting(player.getHitbox())) {
 					fireTimer=System.currentTimeMillis();
-					fireLimit=fireTimer+30000;
+					fireLimit=fireTimer+5000;
 					immune=true;
 					Tile t=new Tile(fires.get(i).getCol(),fires.get(i).getRow(),tileSize,null,false,this);
 					map.addTile(fires.get(i).getCol(), fires.get(i).getRow(), t);
