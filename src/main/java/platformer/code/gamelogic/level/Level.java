@@ -129,6 +129,9 @@ public class Level {
 				else if(values[x][y]==22){
 					tiles[x][y]=new Fire((float)xPosition, (float)yPosition, tileSize, tileset.getImage("Fire"), this);
 					fires.add((Fire)tiles[x][y]);
+				}else if(values[x][y]==23){
+					tiles[x][y]=new Fire((float)xPosition, (float)yPosition, tileSize, tileset.getImage("Inner_Fire"), this);
+					fires.add((Fire)tiles[x][y]);
 				}
 			}
 
@@ -149,6 +152,7 @@ public class Level {
 	}
 
 	public void onPlayerDeath() {
+		player.setColor(Color.YELLOW);
 		active = false;
 		playerDead = true;
 		throwPlayerDieEvent();
@@ -192,7 +196,7 @@ public class Level {
 			for (int i = 0; i < waters.size(); i++) {
 				if (waters.get(i).getHitbox().isIntersecting(player.getHitbox())) {
 					//If the player is touching water, no need to update
-					player.setWalkingSpeed(600);
+					player.setWalkingSpeed(800);
 					tooFast=false;
 					break;
 				}
@@ -200,7 +204,10 @@ public class Level {
 			if(tooFast) player.setWalkingSpeed(400);
 			//Update fires
 			if(immune) fireTimer=System.currentTimeMillis();
-			if(fireTimer>=fireLimit) immune=false;
+			if(fireTimer>=fireLimit){
+				immune=false;
+				player.setColor(Color.YELLOW);
+			}
 			for (int i = 0; i<fires.size(); i++) {
 				if (fires.get(i).getHitbox().isIntersecting(player.getHitbox())) {
 					fireTimer=System.currentTimeMillis();
@@ -220,7 +227,10 @@ public class Level {
 					inTheCloud=true;
 				}
 			}
-			if(!inTheCloud&&GRAVITY<70) GRAVITY=70;
+			if(!inTheCloud&&GRAVITY<70) {
+				GRAVITY=70;
+				player.setJumpPower(1350);
+			}
 			// Update the enemies
 			for (int i = 0; i < enemies.length; i++) {
 				enemies[i].update(tslf);
@@ -284,8 +294,6 @@ public class Level {
 }
 	//added fire functionality to gas, when they collide, all gas in the area is replaced by fire
 	private void addGas(int col, int row, Map map, int numSquaresToFill, ArrayList<Gas> placedThisRound) {
-		boolean ignited=false;
-		ArrayList<Gas> newGasses=new ArrayList<Gas>();
 		map.addTile(col, row, new Gas(col,row,tileSize,tileset.getImage("GasOne"),this,0));
 		numSquaresToFill-=1;
 		while(numSquaresToFill>0){
@@ -299,26 +307,20 @@ public class Level {
 			if(numSquaresToFill>0 && canGoUp){
 				if(numSquaresToFill>0&&!(map.getTiles()[col][row-1].isSolid())&&
 					!(map.getTiles()[col][row-1] instanceof Gas)){
-					if(map.getTiles()[col][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					newGasses.add(g);
 					map.addTile(col,row-1,g);
 					numSquaresToFill-=1;
 				}
 				if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row-1].isSolid()) && !(map.getTiles()[col+1][row-1] instanceof Gas)){
-					if(map.getTiles()[col+1][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col+1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					newGasses.add(g);
 					map.addTile(col+1,row-1,g);
 					numSquaresToFill-=1;
 				}
 				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row-1].isSolid())&& !(map.getTiles()[col-1][row-1] instanceof Gas)){
-					if(map.getTiles()[col-1][row-1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col-1,row-1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					newGasses.add(g);
 					map.addTile(col-1,row-1,g);
 					numSquaresToFill-=1;
 				}
@@ -326,44 +328,34 @@ public class Level {
 			}
 			//Do a purely horizontal check
 			if(numSquaresToFill>0&&canGoRight&&!(map.getTiles()[col+1][row].isSolid())&& !(map.getTiles()[col+1][row] instanceof Gas)){
-				if(map.getTiles()[col+1][row] instanceof Fire) ignited=true;
 				Gas g=new Gas(col+1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
-				newGasses.add(g);
 				map.addTile(col+1,row,g);
 				numSquaresToFill-=1;	
 			}
 			if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row].isSolid())&& !(map.getTiles()[col-1][row] instanceof Gas)){
-				if(map.getTiles()[col-1][row] instanceof Fire) ignited=true;
 				Gas g=new Gas(col-1,row,tileSize,tileset.getImage("GasOne"),this,0);
 				placedThisRound.add(g);
-				newGasses.add(g);
 				map.addTile(col-1,row,g);
 				numSquaresToFill-=1;
 			}
 			//Do the negative of the upwards check
 			if(numSquaresToFill>0&&canGoDown){
 				if(numSquaresToFill>0&&!(map.getTiles()[col][row+1].isSolid())&& !(map.getTiles()[col][row+1] instanceof Gas)) {
-					if(map.getTiles()[col][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					newGasses.add(g);
 					map.addTile(col,row+1,placedThisRound.get(placedThisRound.size()-1));
 					numSquaresToFill-=1;
 				}
 				if(numSquaresToFill>0&&canGoRight&&!map.getTiles()[col+1][row+1].isSolid()&& !(map.getTiles()[col+1][row+1] instanceof Gas)){
-					if(map.getTiles()[col+1][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col+1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					newGasses.add(g);
 					map.addTile(col+1,row+1,g);
 					numSquaresToFill-=1;
 				}
 				if(numSquaresToFill>0&&canGoLeft&&!(map.getTiles()[col-1][row+1].isSolid())&&!(map.getTiles()[col-1][row+1] instanceof Gas)){
-					if(map.getTiles()[col-1][row+1] instanceof Fire) ignited=true;
 					Gas g=new Gas(col-1,row+1,tileSize,tileset.getImage("GasOne"),this,0);
 					placedThisRound.add(g);
-					newGasses.add(g);
 					map.addTile(col-1,row+1,g);
 					numSquaresToFill-=1;
 				}
@@ -377,16 +369,6 @@ public class Level {
 				placedThisRound.remove(0);
 			}
 
-		}
-		System.out.println(newGasses);
-		if(ignited){
-			int i=0;
-			while(newGasses.size()>0){
-				map.addTile(newGasses.get(i).getCol(),newGasses.get(i).getRow(),new Fire(newGasses.get(i).getCol(),newGasses.get(i).getRow(),tileSize,tileset.getImage("Fire"),this));
-			}
-		}
-		for(int i=0;i<newGasses.size(); i++){
-			gasses.add(newGasses.get(i));
 		}
 	}	
 
@@ -441,8 +423,7 @@ public class Level {
 	   	 // Draw the player
 		 g.setFont(new Font("Times New Roman",Font.BOLD,40));
 		 if(immune){
-		 	g.setColor(Color.RED);
-		 	g.drawString(""+(fireLimit-fireTimer),(int)player.getX(),(int)player.getX());
+		 	player.setColor(Color.RED);
 		 }
 		player.draw(g);
 	   	 // used for debugging

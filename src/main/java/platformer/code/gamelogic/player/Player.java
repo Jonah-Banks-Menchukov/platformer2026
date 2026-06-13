@@ -13,6 +13,7 @@ import platformer.code.gamelogic.tiles.Tile;
 public class Player extends PhysicsObject{
 	public float walkSpeed = 400;
 	public float jumpPower = 1350;
+	private Color myColor=Color.YELLOW;
 
 	private boolean isJumping = false;
 
@@ -51,7 +52,7 @@ public class Player extends PhysicsObject{
 
 	@Override
 	public void draw(Graphics g) {
-		g.setColor(Color.YELLOW);
+		g.setColor(myColor);
 		MyGraphics.fillRectWithOutline(g, (int)getX(), (int)getY(), width, height);
 		
 		if(Main.DEBUGGING) {
@@ -65,6 +66,9 @@ public class Player extends PhysicsObject{
 		}
 		
 		hitbox.draw(g);
+	}
+	public void setColor(Color c){
+		myColor=c;
 	}
 	public void setJumpPower(float f){
 		jumpPower=f;
